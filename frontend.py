@@ -1,3 +1,4 @@
+import asyncio
 import os
 from dotenv import load_dotenv
 import streamlit as st
@@ -311,18 +312,18 @@ def run():
         reset_inputs()
 
     if start_button:
-        evaluation_model_1 = evaluate_model(
+        evaluation_model_1 = asyncio.run(evaluate_model(
             user_question=user_question,
             ground_truth=ground_truth,
-            evaluation_metrics=[
-                context_precision,
-                context_recall,
-                context_entities_recall,
-                noise_sensitivity,
-                response_relevancy,
-                faithfulness,
-                discriminator,
-            ],
+            evaluation_metrics={
+                "context_precision": context_precision,
+                "context_recall": context_recall,
+                "context_entities_recall": context_entities_recall,
+                "noise_sensitivity": noise_sensitivity,
+                "response_relevancy": response_relevancy,
+                "faithfulness": faithfulness,
+                "discriminator": discriminator
+            },
             visualization=visualization,
             model={
                 "model_choice": llm_model_1,
@@ -335,19 +336,21 @@ def run():
                 "retriever_k": retriever_k_1,
             },
             knowledge_source=knowledge_source,
-        )
-        evaluation_model_2 = evaluate_model(
+        ))
+        print(evaluation_model_1)
+
+        evaluation_model_2 = asyncio.run(evaluate_model(
             user_question=user_question,
             ground_truth=ground_truth,
-            evaluation_metrics=[
-                context_precision,
-                context_recall,
-                context_entities_recall,
-                noise_sensitivity,
-                response_relevancy,
-                faithfulness,
-                discriminator,
-            ],
+            evaluation_metrics={
+                "context_precision": context_precision,
+                "context_recall": context_recall,
+                "context_entities_recall": context_entities_recall,
+                "noise_sensitivity": noise_sensitivity,
+                "response_relevancy": response_relevancy,
+                "faithfulness": faithfulness,
+                "discriminator": discriminator
+            },
             visualization=visualization,
             model={
                 "model_choice": llm_model_2,
@@ -360,8 +363,17 @@ def run():
                 "retriever_k": retriever_k_2,
             },
             knowledge_source=knowledge_source,
-        )
+        ))
+        print(evaluation_model_2)
 
+
+        st.session_state["question_1"] = evaluation_model_1["question"]
+        st.session_state["context_1"] = evaluation_model_1["context"]
+        st.session_state["answer_1"] = evaluation_model_1["answer"]
+
+        st.session_state["question_2"] = evaluation_model_2["question"]
+        st.session_state["context_2"] = evaluation_model_2["question"]
+        st.session_state["answer_2"] = evaluation_model_2["question"]
 
 if __name__ == "__main__":
     run()

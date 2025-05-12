@@ -1,9 +1,14 @@
 import os
+import asyncio
+
 from typing import List, Dict
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from dotenv import load_dotenv
+
+import pandas as pd
+from ragas.embeddings import LangchainEmbeddingsWrapper
 
 from models.adaptive_rag import AdaptiveRAG
 from models.basic_rag import BasicRAG
@@ -13,9 +18,18 @@ from models.graph_rag import GraphRAG
 from models.semantic_chunking_rag import SemanticChunkingRAG
 from tools import load_yaml_config, get_rag_techniques, get_prompt_techniques
 
-from ragas import evaluate
+from ragas import evaluate, SingleTurnSample
 from ragas.llms import LangchainLLMWrapper
-from ragas.metrics import LLMContextRecall, Faithfulness, FactualCorrectness
+from ragas.metrics import (
+    LLMContextPrecisionWithReference,
+    LLMContextRecall,
+    ContextEntityRecall,
+    NoiseSensitivity,
+    ResponseRelevancy,
+    Faithfulness
+)
+from ragas import evaluate
+
 
 
 load_dotenv(".env")
@@ -246,13 +260,64 @@ def create_files(files):
     return saved_paths
 
 
-def prepare_evaluation(question, answer, context, ground_truth, evaluation_metrics):
+async def prepare_evaluation(question, answer, context, ground_truth, evaluation_metrics):
+    if isinstance(context, str):
+        context = [context]
+
+    llm = ChatOpenAI(
+        model="gpt-4o-mini",
+    )
+    embeddings = OpenAIEmbeddings(
+        model=EMBEDDING_MODEL,
+    )
+
+    evaluator_llm = LangchainLLMWrapper(llm)
+    evaluator_embeddings = LangchainEmbeddingsWrapper(embeddings)
+
+    sample = SingleTurnSample(
+        user_input=question,
+        response=answer,
+        retrieved_contexts=context,
+        reference=ground_truth
+    )
+
+    metrics = {}
+
+    if evaluation_metrics.get("context_precision", False):
+        context_precision = LLMContextPrecisionWithReference(llm=evaluator_llm)
+        metrics["context_precision"] = await context_precision.single_turn_ascore(sample)
+
+    if evaluation_metrics.get("context_recall", False):
+        context_recall = LLMContextRecall(llm=evaluator_llm)
+        metrics["context_recall"] = await context_recall.single_turn_ascore(sample)
+
+    if evaluation_metrics.get("context_entities_recall", False):
+        context_entities_recall = ContextEntityRecall(llm=evaluator_llm)
+        metrics["context_entities_recall"] = await context_entities_recall.single_turn_ascore(sample)
+
+    if evaluation_metrics.get("noise_sensitivity", False):
+        noise_sensitivity = NoiseSensitivity(llm=evaluator_llm)
+        metrics["noise_sensitivity"] = await noise_sensitivity.single_turn_ascore(sample)
+
+    if evaluation_metrics.get("response_relevancy", False):
+        response_relevancy = ResponseRelevancy(llm=evaluator_llm, embeddings=evaluator_embeddings)
+        metrics["response_relevancy"] = await response_relevancy.single_turn_ascore(sample)
+
+    if evaluation_metrics.get("faithfulness", False):
+        faithfulness = Faithfulness(llm=evaluator_llm)
+        metrics["faithfulness"] = await faithfulness.single_turn_ascore(sample)
+
+    # TODO
+    # if evaluation_metrics.get("discriminator", False):
+    #     metrics["discriminator"] =
+
+    return metrics
 
 
-def evaluate_model(
+async def evaluate_model(
     user_question: str,
     ground_truth: str,
-    evaluation_metrics: List[bool],
+    evaluation_metrics: Dict,
     visualization: bool,
     model: Dict,
     knowledge_source: List[str],
@@ -275,7 +340,22 @@ def evaluate_model(
     answer = result["result"]
     context = [doc.page_content for doc in result["source_documents"]]
 
+    metrics = await prepare_evaluation(
+        question=question,
+        answer=answer,
+        context=context,
+        ground_truth=ground_truth,
+        evaluation_metrics=evaluation_metrics,
+    )
 
+    print(metrics)
+
+    return {
+        "question": question,
+        "answer": answer,
+        "context": context,
+        "metrics": metrics,
+    }
 
 
 if __name__ == "__main__":
