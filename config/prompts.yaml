@@ -1,0 +1,11 @@
+{
+  "prompts": [
+    {
+      "name": "zero_shot_prompt",
+      "text": "Classify the sentiment of the following text as positive, negative, or neutral.\nDo not explain your reasoning, just provide the classification.\n\nText: {text}\n\nSentiment:"
+    },
+    {
+
+    }
+  ]
+}
