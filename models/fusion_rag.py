@@ -99,4 +99,4 @@ class FusionRAG(RAG):
     def __call__(self, prompt: str) -> str:
         context = self.retrieve_context(prompt)
         result = self.chain.invoke({"question": prompt, "context": context})
-        return result.content
+        return result

@@ -80,7 +80,6 @@ class AdaptiveRAG(RAG):
         return classify_chain
 
     def retrieve_factual(self, prompt: str) -> List[Document]:
-        print("Retrieving factual")
         enhanced_query_prompt = PromptTemplate(
             input_variables=["query"],
             template="Enhance this factual query for better information retrieval: {query}"
@@ -88,7 +87,6 @@ class AdaptiveRAG(RAG):
 
         query_chain = enhanced_query_prompt | self.llm
         enhanced_query = query_chain.invoke({"query": prompt}).content
-        print(f"Enhanced query: {enhanced_query}")
 
         docs = self.vectorstore.similarity_search(enhanced_query, k=self.retriever_k)
 
@@ -99,7 +97,6 @@ class AdaptiveRAG(RAG):
         ranking_chain = ranking_prompt | self.llm.with_structured_output(RelevantScore)
 
         ranked_docs = []
-        print("Ranking docs")
         for doc in docs:
             input_data = {"query": enhanced_query, "doc": doc.page_content}
             score = float(ranking_chain.invoke(input_data).score)
@@ -109,8 +106,6 @@ class AdaptiveRAG(RAG):
         return [doc for doc, _ in ranked_docs[:self.retriever_k]]
 
     def retrieve_analytical(self, prompt: str) -> List[Document]:
-        print("Retrieving analytical")
-
         sub_queries_prompt = PromptTemplate(
             input_variables=["query", "k"],
             template="Generate {k} sub-questions for: {query}"
@@ -119,7 +114,6 @@ class AdaptiveRAG(RAG):
 
         input_data = {"query": prompt, "k": self.retriever_k}
         sub_queries = sub_queries_chain.invoke(input_data).sub_queries
-        print(f"Sub queries: {sub_queries}")
 
         docs = []
         for sub_query in sub_queries:
@@ -135,12 +129,10 @@ class AdaptiveRAG(RAG):
         docs_text = "\n".join([f"{i}: {doc.page_content[:50]}..." for i, doc in enumerate(docs)])
         input_data = {"query": prompt, "docs": docs_text, "k": self.retriever_k}
         selected_indices_results = diversity_chain.invoke(input_data).indices
-        print(f"Selected indices: {selected_indices_results}")
 
         return[docs[i] for i in selected_indices_results if i < len(docs)]
 
     def retrieve_opinion(self, prompt: str) -> List[Document]:
-        print("Retrieving opinion")
 
         viewpoints_prompt = PromptTemplate(
             input_variables=["query", "k"],
@@ -149,7 +141,6 @@ class AdaptiveRAG(RAG):
         viewpoints_chain = viewpoints_prompt | self.llm
         input_data = {"query": prompt, "k": self.retriever_k}
         viewpoints = viewpoints_chain.invoke(input_data).content.split("\n")
-        print(f"Viewpoints: {viewpoints}")
 
         docs = []
         for viewpoint in viewpoints:
@@ -164,12 +155,10 @@ class AdaptiveRAG(RAG):
         docs_text = "\n".join([f"{i}: {doc.page_content[:50]}..." for i, doc in enumerate(docs)])
         input_data = {"query": prompt, "docs": docs_text, "k": self.retriever_k}
         selected_indices_results = opinion_chain.invoke(input_data).indices
-        print(f"Selected indices: {selected_indices_results}")
 
         return [docs[int(i)] for i in selected_indices_results]
 
     def retrieve_contextual(self, prompt: str, user_context: str = None) -> List[Document]:
-        print("Retrieving contextual")
 
         contextual_prompt = PromptTemplate(
             input_variables=["query", "context"],
@@ -179,7 +168,6 @@ class AdaptiveRAG(RAG):
         context_chain = contextual_prompt | self.llm
         input_data = {"query": prompt, "context": user_context or "No specific context provided"}
         contextualized_query = context_chain.invoke(input_data).content
-        print(f"Contextualized query: {contextualized_query}")
 
         docs = self.vectorstore.similarity_search(contextualized_query, k=self.retriever_k*2)
 
@@ -188,7 +176,6 @@ class AdaptiveRAG(RAG):
             template="Given the query: '{query}' and user context: '{context}', rate the relevance of this document on a scale of 1-10:\nDocument: {doc}\nRelevance score:"
         )
         ranking_chain = ranking_prompt | self.llm.with_structured_output(RelevantScore)
-        print(f"Ranking docs")
 
         ranked_docs = []
         for doc in docs:

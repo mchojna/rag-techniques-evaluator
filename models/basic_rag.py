@@ -72,4 +72,4 @@ class BasicRAG(RAG):
 
     def __call__(self, prompt: str) -> str:
         result = self.chain.invoke(prompt)
-        return result["result"]
+        return result

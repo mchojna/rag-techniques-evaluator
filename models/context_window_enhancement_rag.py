@@ -126,4 +126,4 @@ class ContextWindowEnhancementRag(RAG):
     def __call__(self, prompt: str) -> str:
         content = self.retrieve_with_context_overlap(prompt)
         result = self.chain.invoke({"question": prompt, "context": content})
-        return result.content
+        return result

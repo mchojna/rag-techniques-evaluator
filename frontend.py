@@ -323,7 +323,7 @@ def run():
                 faithfulness,
                 discriminator,
             ],
-            visualizatio=visualization,
+            visualization=visualization,
             model={
                 "model_choice": llm_model_1,
                 "temperature": temperature_1,
@@ -348,7 +348,7 @@ def run():
                 faithfulness,
                 discriminator,
             ],
-            visualizatio=visualization,
+            visualization=visualization,
             model={
                 "model_choice": llm_model_2,
                 "temperature": temperature_2,

@@ -41,7 +41,7 @@ prompts:
 #            - "Analyze the following reasoning paths and determine the most consistent answer. If there are discrepancies, explain why and provide the most likely correct answer. Reasoning paths: {paths} Most consistent answer:"
 #        - self-consistency-check:
 #            - "Evaluate the consistency and reliability of the following result for the given problem. Problem: { problem } Result: { result } Evaluation (consider factors like logical consistency, adherence to known facts, and potential biases):"
-# TODO
+#
 #    task-decomposition-prompt:
 #        - decomposition-prompt:
 #            - "Break down the task of analyzing a company's financial health into 3 subtasks. For each subtask, provide a brief description of what it should accomplish. Task: {task} Subtasks: 1."
@@ -51,7 +51,9 @@ prompts:
 #            - "Analyze the company's cash flow based on the following data: Cash Flow from Operations: ${cash_flow} million Provide a brief analysis of the company's cash flow health."
 #        - result-integration-prompt:
 #            - "Based on the following analyses, provide an overall assessment of the company's financial health: Profitability Analysis: {profitability} Liquidity Analysis: {liquidity} Cash Flow Analysis: {cash_flow} Summarize the key points and give an overall evaluation of the company's financial position."
-# TODO
+#
 #    a-b-testing-prompt: []
+#
 #    iterative-prompt: []
+#
 #    ambiguity-clarity-prompt: []

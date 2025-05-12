@@ -1,15 +1,9 @@
 import os
-import tempfile
 from typing import List, Dict
-from langchain.chains.retrieval_qa.base import RetrievalQA
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.vectorstores import FAISS
-from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
-from pydantic import SecretStr
 
 from models.adaptive_rag import AdaptiveRAG
 from models.basic_rag import BasicRAG
@@ -18,6 +12,11 @@ from models.fusion_rag import FusionRAG
 from models.graph_rag import GraphRAG
 from models.semantic_chunking_rag import SemanticChunkingRAG
 from tools import load_yaml_config, get_rag_techniques, get_prompt_techniques
+
+from ragas import evaluate
+from ragas.llms import LangchainLLMWrapper
+from ragas.metrics import LLMContextRecall, Faithfulness, FactualCorrectness
+
 
 load_dotenv(".env")
 
@@ -90,28 +89,23 @@ def create_prompt(user_question, prompt_technique):
         **Rewritten Prompt:**
         ```
     """
+    # TODO
+    # if prompt_technique == "a-b-testing-prompt":
+    #     result = user_question
+    # elif prompt_technique == "iterative-prompt":
+    #     result = user_question
+    # elif prompt_technique == "ambiguity-clarity-prompt":
+    #     result = user_question
+    # elif prompt_technique == "self-consistency-prompt":
+    #     result = user_question
+    # elif prompt_technique in ["task-decomposition-prompt"]:
+    #     result = user_question
+    # else:
 
-    if prompt_technique == "a-b-testing-prompt":
-        # TODO
-        result = user_question
-    elif prompt_technique == "iterative-prompt":
-        # TODO
-        result = user_question
-    elif prompt_technique == "ambiguity-clarity-prompt":
-        # TODO
-        result = user_question
-    elif prompt_technique == "self-consistency-prompt":
-        # TODO
-        result = user_question
-    elif prompt_technique in ["task-decomposition-prompt"]:
-        # TODO
-        result = user_question
-    else:
-        examples = prompts_config["prompts"][prompt_technique]
-        return rewrite_prompt(template, examples, prompt_technique, user_question)
+    examples = prompts_config["prompts"][prompt_technique]
+    return rewrite_prompt(template, examples, prompt_technique, user_question)
 
-    return result
-
+    # return result
 
 def create_rag(
     rag_technique,
@@ -231,25 +225,28 @@ def create_rag(
     return None
 
 
-def create_files(uploaded_files):
+def create_files(files):
     data_dir = "data"
     saved_paths = []
 
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
 
-    if uploaded_files:
-        for uploaded_file in uploaded_files:
-            file_path = os.path.join(data_dir, uploaded_file.name)
+    if files:
+        for file in files:
+            file_path = os.path.join(data_dir, file.name)
             saved_paths.append(file_path)
 
             try:
                 with open(file_path, "wb") as f:
-                    f.write(uploaded_file.getvalue())
+                    f.write(file.getvalue())
             except Exception as e:
                 pass
 
     return saved_paths
+
+
+def prepare_evaluation(question, answer, context, ground_truth, evaluation_metrics):
 
 
 def evaluate_model(
@@ -273,7 +270,12 @@ def evaluate_model(
         chunk_overlap=model["chunk_overlap"],
     )
 
-    print(rag(prompt))
+    result = rag(prompt)
+    question = result["query"]
+    answer = result["result"]
+    context = [doc.page_content for doc in result["source_documents"]]
+
+
 
 
 if __name__ == "__main__":
