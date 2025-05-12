@@ -6,13 +6,13 @@ from langchain_core.documents import Document
 from pydantic import SecretStr
 from langchain_experimental.text_splitter import SemanticChunker
 
-from rag import RAG
+from models.rag import RAG
 
 class SemanticChunkingRAG(RAG):
-    def __init__(self, base_model: str, embedding_model: str, open_ai_key: SecretStr, path: str, retriever_k: int = 2, chunk_size: int = 1000, chunk_overlap: int = 0):
+    def __init__(self, base_model: str, embedding_model: str, open_ai_key: str, paths: str, retriever_k: int = 2, chunk_size: int = 1000, chunk_overlap: int = 0):
         super().__init__(base_model, embedding_model, open_ai_key)
 
-        self.path = path
+        self.paths = paths
         self.retriever_k = retriever_k
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
@@ -40,11 +40,14 @@ class SemanticChunkingRAG(RAG):
         self.chain = self.create_chain()
 
     def create_vectorstore(self):
-        doc = fitz.open(self.path)
-        content = ""
-        for pag_num in range(len(doc)):
-            page = doc[pag_num]
-            content += page.get_text()
+        full_content = ""
+
+        for file_path in self.paths:
+            doc = fitz.open(file_path)
+            for page_num in range(len(doc)):
+                page = doc[page_num]
+                full_content += page.get_text()
+            doc.close()
 
         text_splitter = SemanticChunker(
             embeddings=self.embeddings,
@@ -52,8 +55,7 @@ class SemanticChunkingRAG(RAG):
             breakpoint_threshold_amount=90
         )
 
-        chunks = text_splitter.split_text(content)
-
+        chunks = text_splitter.split_text(full_content)
         documents = [Document(page_content=chunk) for chunk in chunks]
 
         vectorstore = FAISS.from_documents(

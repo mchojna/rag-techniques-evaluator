@@ -8,17 +8,16 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from rank_bm25 import BM25Okapi
 from pydantic import SecretStr
 import numpy as np
-from sympy.benchmarks.bench_meijerint import alpha
 
-from rag import RAG
+from models.rag import RAG
 
 
 class FusionRAG(RAG):
-    def __init__(self, base_model: str, embedding_model: str, open_ai_key: SecretStr, path: str, retriever_k: int = 2,
+    def __init__(self, base_model: str, embedding_model: str, open_ai_key: str, paths: str, retriever_k: int = 2,
                  chunk_size: int = 1000, chunk_overlap: int = 0, alpha: float = 0.5):
         super().__init__(base_model, embedding_model, open_ai_key)
 
-        self.path = path
+        self.paths = paths
         self.retriever_k = retriever_k
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
@@ -48,8 +47,12 @@ class FusionRAG(RAG):
         self.chain = self.create_chain()
 
     def create_vectorstore(self):
-        loader = PyPDFLoader(self.path)
-        documents = loader.load()
+        all_documents = []
+
+        for path in self.paths:
+            loader = PyPDFLoader(path)
+            documents = loader.load()
+            all_documents.extend(documents)
 
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=self.chunk_size,
@@ -57,7 +60,7 @@ class FusionRAG(RAG):
             length_function=len
         )
 
-        texts = text_splitter.split_documents(documents)
+        texts = text_splitter.split_documents(all_documents)
 
         vectorstore = FAISS.from_documents(
             documents=texts,

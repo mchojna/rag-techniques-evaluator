@@ -5,13 +5,13 @@ from langchain_core.prompts import PromptTemplate
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pydantic import SecretStr
 
-from rag import RAG
+from models.rag import RAG
 
 class BasicRAG(RAG):
-    def __init__(self, base_model: str, embedding_model: str, open_ai_key: SecretStr, path: str, retriever_k: int = 2, chunk_size: int = 1000, chunk_overlap: int = 0):
+    def __init__(self, base_model: str, embedding_model: str, open_ai_key: str, paths: str, retriever_k: int = 2, chunk_size: int = 1000, chunk_overlap: int = 0):
         super().__init__(base_model, embedding_model, open_ai_key)
 
-        self.path = path
+        self.paths = paths
         self.retriever_k = retriever_k
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
@@ -39,17 +39,21 @@ class BasicRAG(RAG):
         self.chain = self.create_chain()
 
     def create_vectorstore(self):
-        loader = PyPDFLoader(self.path)
-        documents = loader.load()
+        all_documents = []
+
+        for file_path in self.paths:
+            loader = PyPDFLoader(file_path)
+            documents = loader.load()
+            all_documents.extend(documents)
 
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=self.chunk_size,
             chunk_overlap=self.chunk_overlap,
             length_function=len
         )
-        texts = text_splitter.split_documents(documents)
-
+        texts = text_splitter.split_documents(all_documents)
         vectorstore = FAISS.from_documents(texts, self.embeddings)
+
         return vectorstore
 
     def create_retriever(self):

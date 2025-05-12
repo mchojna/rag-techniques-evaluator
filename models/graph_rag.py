@@ -21,10 +21,10 @@ from spacy.cli import download
 from tqdm import tqdm
 import nltk
 
-from rag import RAG
+from models.rag import RAG
 
 class DocumentProcessor:
-    def __init__(self, embedding_model: str, open_ai_key:SecretStr, chunk_size: int = 1000, chunk_overlap: int = 0):
+    def __init__(self, embedding_model: str, open_ai_key:str, chunk_size: int = 1000, chunk_overlap: int = 0):
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
@@ -305,10 +305,10 @@ class QueryEngine:
         return compression_retriever.invoke(query)
 
 class GraphRAG(RAG):
-    def __init__(self, base_model: str, embedding_model: str, open_ai_key: SecretStr, path: str, retriever_k: int = 2, chunk_size: int = 1000, chunk_overlap: int = 0):
+    def __init__(self, base_model: str, embedding_model: str, open_ai_key: str, paths: str, retriever_k: int = 2, chunk_size: int = 1000, chunk_overlap: int = 0):
         super().__init__(base_model, embedding_model, open_ai_key)
 
-        self.path = path
+        self.paths = paths
         self.retriever_k = retriever_k
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
@@ -328,10 +328,13 @@ class GraphRAG(RAG):
         return response
 
     def __call__(self, prompt: str) -> str:
-        loader = PyPDFLoader(self.path)
-        documents = loader.load()
+        all_documents = []
+        for path in self.paths:
+            loader = PyPDFLoader(path)
+            documents = loader.load()
+            all_documents.extend(documents)
 
-        self.process_documents(documents)
+        self.process_documents(all_documents)
         response = self.query(prompt)
 
         return response

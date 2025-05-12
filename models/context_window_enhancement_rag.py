@@ -9,13 +9,13 @@ from networkx.classes import neighbors
 from pydantic import SecretStr
 
 
-from rag import RAG
+from models.rag import RAG
 
 class ContextWindowEnhancementRag(RAG):
-    def __init__(self, base_model: str, embedding_model: str, open_ai_key: SecretStr, path: str, retriever_k: int = 2, chunk_size: int = 400, chunk_overlap: int = 200, num_neighbors: int = 1):
+    def __init__(self, base_model: str, embedding_model: str, open_ai_key: str, paths: str, retriever_k: int = 2, chunk_size: int = 400, chunk_overlap: int = 200, num_neighbors: int = 1):
         super().__init__(base_model, embedding_model, open_ai_key)
 
-        self.path = path
+        self.paths = paths
         self.retriever_k = retriever_k
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
@@ -44,19 +44,31 @@ class ContextWindowEnhancementRag(RAG):
         self.chain = self.create_chain()
 
     def create_vectorstore(self):
-        doc = fitz.open(self.path)
-        content = ""
-        for pag_num in range(len(doc)):
-            page = doc[pag_num]
-            content += page.get_text()
-
         chunks = []
-        start = 0
-        while start < len(content):
-            end = start + self.chunk_size
-            chunk = content[start:end]
-            chunks.append(Document(page_content=chunk, metadata={"index": len(chunks), "text": content}))
-            start += self.chunk_size - self.chunk_overlap
+
+        for file_path in self.paths:  # assuming self.paths is a list of paths
+            doc = fitz.open(file_path)
+            content = ""
+            for page_num in range(len(doc)):
+                page = doc[page_num]
+                content += page.get_text()
+            doc.close()
+
+            start = 0
+            while start < len(content):
+                end = start + self.chunk_size
+                chunk_text = content[start:end]
+                chunks.append(
+                    Document(
+                        page_content=chunk_text,
+                        metadata={
+                            "index": len(chunks),
+                            "source_file": file_path,
+                            "text": content
+                        }
+                    )
+                )
+                start += self.chunk_size - self.chunk_overlap
 
         vectorstore = FAISS.from_documents(
             documents=chunks,
