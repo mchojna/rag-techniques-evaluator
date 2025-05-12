@@ -12,6 +12,7 @@ from sympy.benchmarks.bench_meijerint import alpha
 
 from rag import RAG
 
+
 class FusionRAG(RAG):
     def __init__(self, base_model: str, embedding_model: str, open_ai_key: SecretStr, path: str, retriever_k: int = 2,
                  chunk_size: int = 1000, chunk_overlap: int = 0, alpha: float = 0.5):
@@ -31,7 +32,7 @@ class FusionRAG(RAG):
             Use the following pieces of retrieved context to answer the question. 
             If you don't know the answer, just say that you don't know. 
             Use three sentences maximum and keep the answer concise.
-            
+
             Question: {question}
 
             Context: {context}
@@ -79,7 +80,7 @@ class FusionRAG(RAG):
 
         vector_scores = np.array([score for _, score in vector_result])
         vector_scores = 1 - (vector_scores - np.min(vector_scores)) / (
-                    np.max(vector_scores) - np.min(vector_scores) + epsilon)
+                np.max(vector_scores) - np.min(vector_scores) + epsilon)
 
         bm25_scores = (bm25_scores - np.min(bm25_scores)) / (np.max(bm25_scores) - np.min(bm25_scores) + epsilon)
 

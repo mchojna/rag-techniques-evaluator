@@ -230,4 +230,3 @@ class SubQueries(BaseModel):
         description="List of sub-queries for comprehensive analysis.",
         # examples=["What is the population of New York?", "What is the GDP of New York?"]
     )
-
