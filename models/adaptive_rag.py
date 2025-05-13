@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import FAISS
@@ -191,13 +191,18 @@ class AdaptiveRAG(RAG):
         chain = self.prompt_template | self.llm
         return chain
 
-    def __call__(self, prompt: str) -> str:
+    def __call__(self, prompt: str) -> Dict:
         category = self.classify_chain.invoke({"query": prompt}).category
         strategy = self.strategies[category]
         context = "\n\n".join([doc.page_content for doc in strategy(prompt)])
 
         result = self.chain.invoke({"question": prompt, "context": context})
-        return result
+
+        return {
+            "query": prompt,
+            "context": context,
+            "result": result,
+        }
 
 class CategoriesOptions(BaseModel):
     category: str = Field(

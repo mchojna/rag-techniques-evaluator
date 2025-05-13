@@ -324,9 +324,9 @@ class GraphRAG(RAG):
     def query(self, query: str):
         response, traversal_path, filtered_content = self.query_engine.query(query)
 
-        return response
+        return response, filtered_content
 
-    def __call__(self, prompt: str) -> str:
+    def __call__(self, prompt: str) -> Dict:
         all_documents = []
         for path in self.paths:
             loader = PyPDFLoader(path)
@@ -334,6 +334,10 @@ class GraphRAG(RAG):
             all_documents.extend(documents)
 
         self.process_documents(all_documents)
-        response = self.query(prompt)
+        result, content = self.query(prompt)
 
-        return response
+        return {
+            "query": prompt,
+            "context": content,
+            "result": result,
+        }

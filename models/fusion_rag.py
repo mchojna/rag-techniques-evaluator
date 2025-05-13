@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import FAISS
@@ -95,7 +95,11 @@ class FusionRAG(RAG):
         chain = self.prompt | self.llm
         return chain
 
-    def __call__(self, prompt: str) -> str:
+    def __call__(self, prompt: str) -> Dict:
         context = self.retrieve_context(prompt)
         result = self.chain.invoke({"question": prompt, "context": context})
-        return result
+        return {
+            "query": prompt,
+            "context": context,
+            "result": result,
+        }

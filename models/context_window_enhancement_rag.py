@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 import fitz
 from langchain_community.vectorstores import FAISS
@@ -119,7 +119,12 @@ class ContextWindowEnhancementRAG(RAG):
         chain = self.prompt | self.llm
         return chain
 
-    def __call__(self, prompt: str) -> str:
+    def __call__(self, prompt: str) -> Dict:
         content = self.retrieve_with_context_overlap(prompt)
         result = self.chain.invoke({"question": prompt, "context": content})
-        return result
+
+        return {
+            "query": prompt,
+            "context": content,
+            "result": result,
+        }

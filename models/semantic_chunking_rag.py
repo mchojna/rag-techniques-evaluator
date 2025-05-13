@@ -1,3 +1,5 @@
+from typing import Dict
+
 import fitz
 from langchain.chains.retrieval_qa.base import RetrievalQA
 from langchain_community.vectorstores import FAISS
@@ -69,15 +71,25 @@ class SemanticChunkingRAG(RAG):
         return chunks_query_retriever
 
     def create_chain(self):
-        chain = RetrievalQA.from_chain_type(
-            llm=self.llm,
-            chain_type="stuff",
-            retriever=self.retriever,
-            chain_type_kwargs={"prompt": self.prompt},
-            return_source_documents=True
-        )
+        # chain = RetrievalQA.from_chain_type(
+        #     llm=self.llm,
+        #     chain_type="stuff",
+        #     retriever=self.retriever,
+        #     chain_type_kwargs={"prompt": self.prompt},
+        #     return_source_documents=True
+        # )
+        # return chain
+        chain = self.prompt | self.llm
         return chain
 
-    def __call__(self, prompt: str) -> str:
-        result = self.chain.invoke(prompt)
-        return result
+    def __call__(self, prompt: str) -> Dict:
+        # result = self.chain.invoke(prompt)
+        # return result
+        content = self.retriever.invoke(input=prompt)
+        result = self.chain.invoke({"question": prompt, "context": content})
+
+        return {
+            "query": prompt,
+            "context": content,
+            "result": result,
+        }

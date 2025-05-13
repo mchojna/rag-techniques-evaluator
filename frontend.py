@@ -368,3 +368,6 @@ def run():
         # evaluation_model_2["question"]
         # evaluation_model_2["question"]
         # evaluation_model_2["question"]
+
+if __name__ == "__main__":
+    run()
