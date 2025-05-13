@@ -3,7 +3,6 @@ from langchain.chains.retrieval_qa.base import RetrievalQA
 from langchain_community.vectorstores import FAISS
 from langchain_core.prompts import PromptTemplate
 from langchain_core.documents import Document
-from pydantic import SecretStr
 from langchain_experimental.text_splitter import SemanticChunker
 
 from models.rag import RAG

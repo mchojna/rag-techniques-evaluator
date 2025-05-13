@@ -3,11 +3,10 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import FAISS
 from langchain_core.prompts import PromptTemplate
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from pydantic import SecretStr
 
 from models.rag import RAG
 
-class BasicRAG(RAG):
+class SimpleRAG(RAG):
     def __init__(self, base_model: str, embedding_model: str, open_ai_key: str, paths: str, retriever_k: int = 2, chunk_size: int = 1000, chunk_overlap: int = 0):
         super().__init__(base_model, embedding_model, open_ai_key)
 

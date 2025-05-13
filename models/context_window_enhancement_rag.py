@@ -1,17 +1,13 @@
 from typing import List
 
 import fitz
-from langchain.chains.retrieval_qa.base import RetrievalQA
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain_core.prompts import PromptTemplate
-from networkx.classes import neighbors
-from pydantic import SecretStr
-
 
 from models.rag import RAG
 
-class ContextWindowEnhancementRag(RAG):
+class ContextWindowEnhancementRAG(RAG):
     def __init__(self, base_model: str, embedding_model: str, open_ai_key: str, paths: str, retriever_k: int = 2, chunk_size: int = 400, chunk_overlap: int = 200, num_neighbors: int = 1):
         super().__init__(base_model, embedding_model, open_ai_key)
 

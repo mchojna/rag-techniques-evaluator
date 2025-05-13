@@ -6,7 +6,6 @@ from langchain.docstore.document import Document
 from langchain_core.prompts import PromptTemplate
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from rank_bm25 import BM25Okapi
-from pydantic import SecretStr
 import numpy as np
 
 from models.rag import RAG

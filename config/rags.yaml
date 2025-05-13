@@ -1,30 +1,30 @@
 rags:
-  - adaptive-retrieval
   - simple-rag
-  - context-enrichment-window-around-chunk
-  - fusion-retrieval
+  - adaptive-rag
+  - context-window-enhancement-rag
+  - fusion-rag
   - graph-rag
-  - semantic-chunking
+  - semantic-chunking-rag
 # TODO
-#  - hyde-hypothetical-document-embedding
-#  - hype-hypothetical-prompt-embeddings
-#  - microsoft-graphrag
-#  - choose-chunk-size
-#  - contextual-chunk-headers
-#  - contextual-compression
+#  - hyde-hypothetical-document-embedding-rag
+#  - hype-hypothetical-prompt-embeddings-rag
+#  - microsoft-graph-rag
+#  - choose-chunk-size-rag
+#  - contextual-chunk-headers-rag
+#  - contextual-compression-rag
 #  - crag
-#  - dartboard
-#  - document-augmentation
-#  - explainable-retrieval
-#  - hierarchical-indices
-#  - multi-model-rag-with-captioning
-#  - multi-model-rag-with-colpal
-#  - proposition-chunking
-#  - query-transformations
-#  - raptor
-#  - relevant-segment-extraction
+#  - dartboard-rag
+#  - document-augmentation-rag
+#  - explainable-rag
+#  - hierarchical-indices-rag
+#  - multi-model-with-captioning-rag
+#  - multi-model-with-colpal-rag
+#  - proposition-chunking-rag
+#  - query-transformations-rag
+#  - raptor-rag
+#  - relevant-segment-extraction-rag
 #  - reliable-rag
-#  - reranking
-#  - retrieval-with-feedback-loop
+#  - reranking-rag
+#  - with-feedback-loop-rag
 #  - self-rag
 #  - simple-csv-rag

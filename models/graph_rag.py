@@ -9,7 +9,7 @@ from langchain.retrievers.document_compressors import LLMChainExtractor
 from langchain_community.callbacks.manager import get_openai_callback
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.prompt_values import PromptValue
-from pydantic import SecretStr, BaseModel, Field
+from pydantic import BaseModel, Field
 from sklearn.metrics.pairwise import cosine_similarity
 from langchain_openai import OpenAIEmbeddings
 from typing import List, Tuple, Dict
@@ -19,7 +19,6 @@ import heapq
 import numpy as np
 from spacy.cli import download
 from tqdm import tqdm
-import nltk
 
 from models.rag import RAG
 

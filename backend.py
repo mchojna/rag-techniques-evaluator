@@ -1,354 +1,49 @@
-import os
 import asyncio
+import os
 
 from typing import List, Dict
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnablePassthrough
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from dotenv import load_dotenv
 
-import pandas as pd
-from ragas.embeddings import LangchainEmbeddingsWrapper
-
-from models.adaptive_rag import AdaptiveRAG
-from models.basic_rag import BasicRAG
-from models.context_window_enhancement_rag import ContextWindowEnhancementRag
-from models.fusion_rag import FusionRAG
-from models.graph_rag import GraphRAG
-from models.semantic_chunking_rag import SemanticChunkingRAG
-from tools import load_yaml_config, get_rag_techniques, get_prompt_techniques
-
-from ragas import evaluate, SingleTurnSample
-from ragas.llms import LangchainLLMWrapper
-from ragas.metrics import (
-    LLMContextPrecisionWithReference,
-    LLMContextRecall,
-    ContextEntityRecall,
-    NoiseSensitivity,
-    ResponseRelevancy,
-    Faithfulness
-)
-from ragas import evaluate
-
-
+from utilities.evaluation import prepare_evaluation
+from utilities.prompt import create_prompt
+from utilities.rag import create_rag
 
 load_dotenv(".env")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-ada-002")
 
-
-def rewrite_prompt(template, examples, prompt_technique, prompt):
-    prompt_template = ChatPromptTemplate.from_template(template)
-    chain = (
-        {
-            "examples": RunnablePassthrough(),
-            "prompt_technique": RunnablePassthrough(),
-            "prompt": RunnablePassthrough(),
-        }
-        | prompt_template
-        | ChatOpenAI(model="gpt-4o-mini")
-    )
-    result = chain.invoke(
-        {
-            "examples": "\t".join(examples),
-            "prompt_technique": prompt_technique,
-            "prompt": prompt,
-        }
-    ).content
-
-    return result
-
-
-def create_prompt(user_question, prompt_technique):
-    prompts_config = load_yaml_config("config/prompts.yaml")
-    prompt_techniques = get_prompt_techniques(prompts_config)
-
-    template = """
-        **Role:** You are an expert Prompt Engineer specializing in refining and optimizing prompts based on established techniques and stylistic examples.
-        
-        **Objective:** Rewrite the provided `{{prompt}}` according to the specified `{{prompt_technique}}`. The rewritten prompt must accurately reflect the style, structure, tone, and underlying intent demonstrated in the provided `{{examples}}`.
-        
-        **Context:**
-        * The original `{{prompt}}` needs improvement or adaptation.
-        * The `{{examples}}` serve as a gold standard for the desired output format and style.
-        * The `{{prompt_technique}}` provides the specific method or framework to use for the rewrite (e.g., Chain-of-Thought, Role Prompting, Few-Shot, Zero-Shot CoT, etc.).
-        
-        **Instructions:**
-        1.  **Analyze:** Carefully examine the `{{prompt}}`, `{{examples}}`, and `{{prompt_technique}}`.
-        2.  **Identify Core Intent:** Understand the fundamental goal of the original `{{prompt}}`.
-        3.  **Emulate Style:** Discern the key characteristics (formatting, language, level of detail) of the `{{examples}}`.
-        4.  **Apply Technique:** Integrate the principles of the specified `{{prompt_technique}}` into the prompt structure.
-        5.  **Rewrite:** Construct the new prompt, ensuring it:
-            * Achieves the original intent.
-            * Conforms to the style and structure of the `{{examples}}`.
-            * Effectively implements the `{{prompt_technique}}`.
-            * Maintains clarity and purpose.
-        
-        **Input Variables:**
-        * `prompt`: The original prompt text to be rewritten.
-        * `examples`: One or more examples demonstrating the target style and structure.
-        * `prompt_technique`: The name or description of the prompt engineering technique to apply.
-        
-        **Output Requirements:**
-        * Return **only** the final, rewritten prompt text.
-        * Do not include any explanations, unnecessary content, introductory phrases, apologies, or markdown formatting around the final prompt itself (unless the examples inherently require such formatting).
-        
-        --- START OF INPUTS ---
-        Prompt: {{{prompt}}}
-        Examples: {{{examples}}}
-        Prompt Technique: {{{prompt_technique}}}
-        --- END OF INPUTS ---
-        
-        **Rewritten Prompt:**
-        ```
-    """
-    # TODO
-    # if prompt_technique == "a-b-testing-prompt":
-    #     result = user_question
-    # elif prompt_technique == "iterative-prompt":
-    #     result = user_question
-    # elif prompt_technique == "ambiguity-clarity-prompt":
-    #     result = user_question
-    # elif prompt_technique == "self-consistency-prompt":
-    #     result = user_question
-    # elif prompt_technique in ["task-decomposition-prompt"]:
-    #     result = user_question
-    # else:
-
-    examples = prompts_config["prompts"][prompt_technique]
-    return rewrite_prompt(template, examples, prompt_technique, user_question)
-
-    # return result
-
-def create_rag(
-    rag_technique,
-    base_model,
-    embedding_model,
-    data,
-    retriever_k,
-    chunk_size,
-    chunk_overlap,
-):
-    if rag_technique == "adaptive-retrieval":
-        return AdaptiveRAG(
-            base_model=base_model,
-            embedding_model=embedding_model,
-            open_ai_key=OPENAI_API_KEY,
-            paths=data,
-            retriever_k=retriever_k,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-        )
-    elif rag_technique == "context-enrichment-window-around-chunk":
-        return ContextWindowEnhancementRag(
-            base_model=base_model,
-            embedding_model=embedding_model,
-            open_ai_key=OPENAI_API_KEY,
-            paths=data,
-            retriever_k=retriever_k,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-        )
-    elif rag_technique == "fusion-retrieval":
-        return FusionRAG(
-            base_model=base_model,
-            embedding_model=embedding_model,
-            open_ai_key=OPENAI_API_KEY,
-            paths=data,
-            retriever_k=retriever_k,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-        )
-    elif rag_technique == "graph-rag":
-        return GraphRAG(
-            base_model=base_model,
-            embedding_model=embedding_model,
-            open_ai_key=OPENAI_API_KEY,
-            paths=data,
-            retriever_k=retriever_k,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-        )
-    elif rag_technique == "semantic-chunking":
-        return SemanticChunkingRAG(
-            base_model=base_model,
-            embedding_model=embedding_model,
-            open_ai_key=OPENAI_API_KEY,
-            paths=data,
-            retriever_k=retriever_k,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-        )
-    elif rag_technique == "simple-rag":
-        return BasicRAG(
-            base_model=base_model,
-            embedding_model=embedding_model,
-            open_ai_key=OPENAI_API_KEY,
-            paths=data,
-            retriever_k=retriever_k,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-        )
-    # TODO
-    # if rag_technique == "hyde-hypothetical-document-embedding":
-    #     pass
-    # elif rag_technique == "hype-hypothetical-prompt-embeddings":
-    #     pass
-    # elif rag_technique == "microsoft-graphrag":
-    #     pass
-    # elif rag_technique == "choose-chunk-size":
-    #     pass
-    # elif rag_technique == "contextual-chunk-headers":
-    #     pass
-    # elif rag_technique == "contextual-compression":
-    #     pass
-    # elif rag_technique == "crag":
-    #     pass
-    # elif rag_technique == "dartboard":
-    #     pass
-    # elif rag_technique == "document-augmentation":
-    #     pass
-    # elif rag_technique == "explainable-retrieval":
-    #     pass
-    # elif rag_technique == "hierarchical-indices":
-    #     pass
-    # elif rag_technique == "multi-model-rag-with-captioning":
-    #     pass
-    # elif rag_technique == "multi-model-rag-with-colpal":
-    #     pass
-    # elif rag_technique == "proposition-chunking":
-    #     pass
-    # elif rag_technique == "query-transformations":
-    #     pass
-    # elif rag_technique == "raptor":
-    #     pass
-    # elif rag_technique == "relevant-segment-extraction":
-    #     pass
-    # elif rag_technique == "reliable-rag":
-    #     pass
-    # elif rag_technique == "reranking":
-    #     pass
-    # elif rag_technique == "retrieval-with-feedback-loop":
-    #     pass
-    # elif rag_technique == "self-rag":
-    #     pass
-    # elif rag_technique == "simple-csv-rag":
-    #     pass
-
-    return None
-
-
-def create_files(files):
-    data_dir = "data"
-    saved_paths = []
-
-    if not os.path.exists(data_dir):
-        os.makedirs(data_dir)
-
-    if files:
-        for file in files:
-            file_path = os.path.join(data_dir, file.name)
-            saved_paths.append(file_path)
-
-            try:
-                with open(file_path, "wb") as f:
-                    f.write(file.getvalue())
-            except Exception as e:
-                pass
-
-    return saved_paths
-
-
-async def prepare_evaluation(question, answer, context, ground_truth, evaluation_metrics):
-    if isinstance(context, str):
-        context = [context]
-
-    llm = ChatOpenAI(
-        model="gpt-4o-mini",
-    )
-    embeddings = OpenAIEmbeddings(
-        model=EMBEDDING_MODEL,
-    )
-
-    evaluator_llm = LangchainLLMWrapper(llm)
-    evaluator_embeddings = LangchainEmbeddingsWrapper(embeddings)
-
-    sample = SingleTurnSample(
-        user_input=question,
-        response=answer,
-        retrieved_contexts=context,
-        reference=ground_truth
-    )
-
-    metrics = {}
-
-    if evaluation_metrics.get("context_precision", False):
-        context_precision = LLMContextPrecisionWithReference(llm=evaluator_llm)
-        metrics["context_precision"] = await context_precision.single_turn_ascore(sample)
-
-    if evaluation_metrics.get("context_recall", False):
-        context_recall = LLMContextRecall(llm=evaluator_llm)
-        metrics["context_recall"] = await context_recall.single_turn_ascore(sample)
-
-    if evaluation_metrics.get("context_entities_recall", False):
-        context_entities_recall = ContextEntityRecall(llm=evaluator_llm)
-        metrics["context_entities_recall"] = await context_entities_recall.single_turn_ascore(sample)
-
-    if evaluation_metrics.get("noise_sensitivity", False):
-        noise_sensitivity = NoiseSensitivity(llm=evaluator_llm)
-        metrics["noise_sensitivity"] = await noise_sensitivity.single_turn_ascore(sample)
-
-    if evaluation_metrics.get("response_relevancy", False):
-        response_relevancy = ResponseRelevancy(llm=evaluator_llm, embeddings=evaluator_embeddings)
-        metrics["response_relevancy"] = await response_relevancy.single_turn_ascore(sample)
-
-    if evaluation_metrics.get("faithfulness", False):
-        faithfulness = Faithfulness(llm=evaluator_llm)
-        metrics["faithfulness"] = await faithfulness.single_turn_ascore(sample)
-
-    # TODO
-    # if evaluation_metrics.get("discriminator", False):
-    #     metrics["discriminator"] =
-
-    return metrics
-
-
-async def evaluate_model(
-    user_question: str,
-    ground_truth: str,
-    evaluation_metrics: Dict,
-    visualization: bool,
-    model: Dict,
-    knowledge_source: List[str],
-):
+async def evaluate_model(user_question: str, ground_truth: str, evaluation_metrics: Dict, visualization: bool, model: Dict, knowledge_source: List[str]) -> Dict:
     prompt = create_prompt(user_question, model["prompt_technique"])
-    data = create_files(knowledge_source)
-    print(data)
+    # paths = create_files(knowledge_source)
+    paths = knowledge_source
     rag = create_rag(
         rag_technique=model["rag_technique"],
         base_model=model["model_choice"],
         embedding_model=EMBEDDING_MODEL,
-        data=data,
+        open_ai_key=OPENAI_API_KEY,
+        paths=paths,
         retriever_k=model["retriever_k"],
         chunk_size=model["chunk_size"],
-        chunk_overlap=model["chunk_overlap"],
+        chunk_overlap=model["chunk_overlap"]
     )
-
     result = rag(prompt)
+
     question = result["query"]
     answer = result["result"]
     context = [doc.page_content for doc in result["source_documents"]]
 
     metrics = await prepare_evaluation(
-        question=question,
-        answer=answer,
-        context=context,
-        ground_truth=ground_truth,
-        evaluation_metrics=evaluation_metrics,
+        user_input=question,
+        response=answer,
+        retrieved_contexts=context,
+        reference=ground_truth,
+        evaluation_metrics=evaluation_metrics
     )
 
-    print(metrics)
+    # TODO
+    # if visualization:
+    #     pass
 
     return {
         "question": question,
@@ -358,5 +53,37 @@ async def evaluate_model(
     }
 
 
+async def main():
+    test = await evaluate_model(
+        user_question="What is the point of attention mechanism?",
+        ground_truth="The attention mechanism allows a model to focus on the most relevant parts of the input when making predictions, dynamically weighting different elements based on their importance. This improves performance, especially in tasks like machine translation and text generation, by helping the model capture dependencies and context more effectively.",
+        evaluation_metrics={
+            "context_precision": True,
+            "context_recall": True,
+            "context_entities_recall": True,
+            "noise_sensitivity": True,
+            "response_relevancy": True,
+            "faithfulness": True,
+            "discriminator": False
+        },
+        visualization=False,
+        model={
+            "model_choice": "gpt-4o-mini",
+            "temperature": 1,
+            "max_tokens": 1000,
+            "rag_technique": "fusion-rag",
+            "prompt_technique": "zero-shot-prompt",
+            "chunk_size": 1000,
+            "chunk_overlap": 200,
+            "retriever_k": 2,
+        },
+        knowledge_source=[
+            "/Users/mchojna/Documents/Repozytoria/rag-techniques-evaluator/data/NIPS-2017-attention-is-all-you-need-Paper.pdf"
+        ],
+    )
+    return test
+
 if __name__ == "__main__":
-    pass
+    res = asyncio.run(main())
+    print(res)
+

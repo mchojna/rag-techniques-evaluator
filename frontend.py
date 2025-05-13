@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 import streamlit as st
 from backend import evaluate_model
-from tools import load_yaml_config, get_rag_techniques, get_prompt_techniques
+from utilities.tools import load_yaml_config, get_rag_techniques, get_prompt_techniques
 
 load_dotenv()
 
@@ -16,11 +16,8 @@ def reset_inputs():
 def run():
     st.set_page_config(page_title="RAG Evaluator", layout="wide", page_icon="📊")
 
-    prompts_config = load_yaml_config("config/prompts.yaml")
-    rag_config = load_yaml_config("config/rags.yaml")
-
-    prompt_techniques = get_prompt_techniques(prompts_config)
-    rag_techniques = get_rag_techniques(rag_config)
+    prompt_techniques = get_prompt_techniques(load_yaml_config("config/prompts.yaml"))
+    rag_techniques = get_rag_techniques(load_yaml_config("config/rags.yaml"))
 
     for key, default in {
         "user_question": "",
@@ -98,46 +95,45 @@ def run():
             "Select the metrics you'd like to use for evaluating the system's response against the reference answer and context."
         )
         context_precision = st.checkbox(
-            "Context Precision",
+            label="Context Precision",
             help="How precisely the retrieved context supports the correct answer.",
             key="context_precision",
         )
         context_recall = st.checkbox(
-            "Context Recall",
+            label="Context Recall",
             help="How completely the relevant parts of the context are retrieved.",
             key="context_recall",
         )
         context_entities_recall = st.checkbox(
-            "Context Entities Recall",
+            label="Context Entities Recall",
             help="Measures if key entities from the reference are present in the context.",
             key="context_entities_recall",
         )
         noise_sensitivity = st.checkbox(
-            "Noise Sensitivity",
+            label="Noise Sensitivity",
             help="Evaluates if the model is influenced by irrelevant or misleading information.",
             key="noise_sensitivity",
         )
         response_relevancy = st.checkbox(
-            "Response Relevancy",
+            label="Response Relevancy",
             help="Checks how relevant the generated answer is to the question.",
             key="response_relevancy",
         )
         faithfulness = st.checkbox(
-            "Faithfulness",
+            label="Faithfulness",
             help="Assesses whether the generated answer is consistent with the provided context.",
             key="faithfulness",
         )
         discriminator = st.checkbox(
-            "Discriminator",
+            label="Discriminator",
             help="Sends the generated answer to a separate LLM, which acts as a judge to determine its quality or correctness.",
             key="discriminator",
         )
         st.divider()
 
         st.header("📈 Visualizations")
-        st.text("TBD...")
         visualization = st.checkbox(
-            "Visualization",
+            label="Visualization",
             help="Displays a visual summary of the generated content, such as charts, graphs, or other visual aids that help interpret the information more easily.",
             key="visualization",
         )
@@ -366,14 +362,9 @@ def run():
         ))
         print(evaluation_model_2)
 
-
-        st.session_state["question_1"] = evaluation_model_1["question"]
-        st.session_state["context_1"] = evaluation_model_1["context"]
-        st.session_state["answer_1"] = evaluation_model_1["answer"]
-
-        st.session_state["question_2"] = evaluation_model_2["question"]
-        st.session_state["context_2"] = evaluation_model_2["question"]
-        st.session_state["answer_2"] = evaluation_model_2["question"]
-
-if __name__ == "__main__":
-    run()
+        # evaluation_model_1["question"]
+        # evaluation_model_1["context"]
+        # evaluation_model_1["answer"]
+        # evaluation_model_2["question"]
+        # evaluation_model_2["question"]
+        # evaluation_model_2["question"]
