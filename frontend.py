@@ -21,6 +21,30 @@ def load_config(config):
             st.session_state[key] = default
 
 
+def update_evaluation_results():
+    if 'evaluation_results' not in st.session_state:
+        return
+
+    results = st.session_state.evaluation_results
+
+    # Update Model 1 states
+    st.session_state.question_1 = results['model1']['question']
+    st.session_state.context_1 = (
+        "\n".join(results['model1']['context'])
+        if isinstance(results['model1']['context'], list)
+        else results['model1']['context']
+    )
+    st.session_state.answer_1 = results['model1']['answer']
+
+    # Update Model 2 states
+    st.session_state.question_2 = results['model2']['question']
+    st.session_state.context_2 = (
+        "\n".join(results['model2']['context'])
+        if isinstance(results['model2']['context'], list)
+        else results['model2']['context']
+    )
+    st.session_state.answer_2 = results['model2']['answer']
+
 def run():
     st.set_page_config(page_title="RAG Evaluator", layout="wide", page_icon="📊")
 
@@ -63,6 +87,7 @@ def run():
     }
 
     load_config(config)
+    update_evaluation_results()
 
     st.title("RAG Techniques Evaluator")
 
@@ -142,10 +167,9 @@ def run():
 
         st.header("📈 Visualizations")
         visualization = st.checkbox(
-            label="Visualization (TBD...)",
+            label="Visualization",
             help="Displays a visual summary of the generated content, such as charts, graphs, or other visual aids that help interpret the information more easily.",
             key="visualization",
-            disabled=True,
         )
         st.divider()
 
@@ -230,12 +254,10 @@ def run():
             st.divider()
 
             st.subheader("✉️ Conversation")
-            question_1 = st.text_area("Question", disabled=True, key="question_1")
-            context_1 = st.text_area("Context", disabled=True, key="context_1")
-            answer_1 = st.text_area("Answer", disabled=True, key="answer_1")
+            st.text_area("Question", disabled=True, key="question_1")
+            st.text_area("Context", disabled=True, key="context_1")
+            st.text_area("Answer", disabled=True, key="answer_1")
             st.divider()
-
-            st.subheader("🔬 Results")
 
         with col_model_2:
             st.header("Large Language Model 2")
@@ -305,12 +327,10 @@ def run():
             st.divider()
 
             st.subheader("💬 Conversation")
-            question_2 = st.text_area("Question", disabled=True, key="question_2")
-            context_2 = st.text_area("Context", disabled=True, key="context_2")
-            answer_2 = st.text_area("Answer", disabled=True, key="answer_2")
+            st.text_area("Question", disabled=True, key="question_2")
+            st.text_area("Context", disabled=True, key="context_2")
+            st.text_area("Answer", disabled=True, key="answer_2")
             st.divider()
-
-            st.subheader("📈 Results")
 
     if reset_button:
         reset_inputs()
@@ -372,67 +392,60 @@ def run():
                 )
             )
 
-            # Update text areas for Model 1
-            st.session_state.question_1 = evaluation_model_1["question"]
-            st.session_state.context_1 = (
-                "\n".join(evaluation_model_1["context"])
-                if isinstance(evaluation_model_1["context"], list)
-                else evaluation_model_1["context"]
+            st.session_state.evaluation_results = {
+                'model1': evaluation_model_1,
+                'model2': evaluation_model_2
+            }
+
+            metrics_df_1 = pd.DataFrame(
+                evaluation_model_1["metrics"].items(), columns=["Metric", "Score"]
             )
-            st.session_state.answer_1 = evaluation_model_1["answer"]
-
-            # Update text areas for Model 2
-            st.session_state.question_2 = evaluation_model_2["question"]
-            st.session_state.context_2 = (
-                "\n".join(evaluation_model_2["context"])
-                if isinstance(evaluation_model_2["context"], list)
-                else evaluation_model_2["context"]
+            metrics_df_2 = pd.DataFrame(
+                evaluation_model_2["metrics"].items(), columns=["Metric", "Score"]
             )
-            st.session_state.answer_2 = evaluation_model_2["answer"]
 
-            # Display evaluation results
-            with col_model_1:
-                st.subheader("🔬 Results")
-                metrics_df_1 = pd.DataFrame(
-                    evaluation_model_1["metrics"].items(), columns=["Metric", "Score"]
-                )
-                st.table(metrics_df_1)
+            st.session_state.metrics_df_1 = metrics_df_1
+            st.session_state.metrics_df_2 = metrics_df_2
 
-                if visualization:
-                    st.bar_chart(metrics_df_1.set_index("Metric"))
+            st.rerun()
 
-            with col_model_2:
-                st.subheader("📈 Results")
-                metrics_df_2 = pd.DataFrame(
-                    evaluation_model_2["metrics"].items(), columns=["Metric", "Score"]
-                )
-                st.table(metrics_df_2)
 
-                if visualization:
-                    st.bar_chart(metrics_df_2.set_index("Metric"))
+    # After the rerun, display results and visualizations
+    if 'metrics_df_1' in st.session_state and 'metrics_df_2' in st.session_state:
+        with col_model_1:
+            st.subheader("🔬 Results")
+            st.table(st.session_state.metrics_df_1)
 
-            # Compare models
-            st.subheader("📊 Models Comparison")
-            comparison_df = pd.DataFrame(
-                {
-                    "Metric": metrics_df_1["Metric"],
-                    f"{llm_model_1}": metrics_df_1["Score"],
-                    f"{llm_model_2}": metrics_df_2["Score"],
-                }
+        with col_model_2:
+            st.subheader("📈 Results")
+            st.table(st.session_state.metrics_df_2)
+
+        st.divider()
+
+        st.subheader("📊 Models Comparison")
+        comparison_df = pd.DataFrame(
+            {
+                "Metric": st.session_state.metrics_df_1["Metric"],
+                f"{llm_model_1}": st.session_state.metrics_df_1["Score"],
+                f"{llm_model_2}": st.session_state.metrics_df_2["Score"],
+            }
+        )
+        st.table(comparison_df)
+
+
+        if visualization:
+            st.divider()
+            st.subheader("📉 Visualization")
+            comparison_df_melted = comparison_df.melt(
+                id_vars=["Metric"], var_name="Model", value_name="Score"
             )
-            st.table(comparison_df)
-
-            if visualization:
-                comparison_df_melted = comparison_df.melt(
-                    id_vars=["Metric"], var_name="Model", value_name="Score"
-                )
-                chart = (
-                    alt.Chart(comparison_df_melted)
-                    .mark_bar()
-                    .encode(x="Metric", y="Score", color="Model", column="Model")
-                    .properties(width=300)
-                )
-                st.altair_chart(chart)
+            chart = (
+                alt.Chart(comparison_df_melted)
+                .mark_bar()
+                .encode(x="Metric", y="Score", color="Model", column="Model")
+                .properties(width=1500)
+            )
+            st.altair_chart(chart, use_container_width=True)
 
 
 if __name__ == "__main__":

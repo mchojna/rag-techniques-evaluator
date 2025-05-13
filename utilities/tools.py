@@ -24,12 +24,12 @@ def create_files(files) -> List[str]:
 
     if files:
         for file in files:
-            file_path = os.path.join(data_dir, file)
+            file_path = os.path.join(data_dir, file.name)
             saved_paths.append(file_path)
 
             try:
                 with open(file_path, "wb") as f:
-                    f.write(file.getValue())
+                    f.write(file.getvalue())
             except Exception as e:
                 print(e)
 
