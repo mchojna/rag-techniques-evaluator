@@ -12,6 +12,10 @@ def reset_inputs():
     st.session_state.clear()
     st.rerun()
 
+def load_config(config):
+    for key, default in config.items():
+        if key not in st.session_state:
+            st.session_state[key] = default
 
 def run():
     st.set_page_config(page_title="RAG Evaluator", layout="wide", page_icon="📊")
@@ -19,7 +23,7 @@ def run():
     prompt_techniques = get_prompt_techniques(load_yaml_config("config/prompts.yaml"))
     rag_techniques = get_rag_techniques(load_yaml_config("config/rags.yaml"))
 
-    for key, default in {
+    config = {
         "user_question": "",
         "ground_truth": "",
         "context_precision": False,
@@ -38,9 +42,9 @@ def run():
         "chunk_size_1": 500,
         "chunk_overlap_1": 200,
         "retriever_k_1": 5,
-        "question_1": "Type your question here...",
-        "context_1": "Context for the model... (predefined)",
-        "answer_1": "The system's answer will appear here...",
+        "question_1": "Here will be your question...",
+        "context_1": "Here will be the context...",
+        "answer_1": "Here will be the answer...",
         "model_choice_2": os.getenv("BASE_MODEL", "gpt-4o-mini"),
         "temperature_2": 0.7,
         "max_tokens_2": 500,
@@ -49,12 +53,12 @@ def run():
         "chunk_size_2": 500,
         "chunk_overlap_2": 200,
         "retriever_k_2": 5,
-        "question_2": "Type your question here...",
-        "context_2": "Context for the model... (predefined)",
-        "answer_2": "The system's answer will appear here...",
-    }.items():
-        if key not in st.session_state:
-            st.session_state[key] = default
+        "question_2": "Here will be your question...",
+        "context_2": "Here will be the context...",
+        "answer_2": "Here will be the answer...",
+    }
+
+    load_config(config)
 
     st.title("RAG Techniques Evaluator")
 
@@ -125,17 +129,19 @@ def run():
             key="faithfulness",
         )
         discriminator = st.checkbox(
-            label="Discriminator",
+            label="Discriminator (TBD...)",
             help="Sends the generated answer to a separate LLM, which acts as a judge to determine its quality or correctness.",
             key="discriminator",
+            disabled=True,
         )
         st.divider()
 
         st.header("📈 Visualizations")
         visualization = st.checkbox(
-            label="Visualization",
+            label="Visualization (TBD...)",
             help="Displays a visual summary of the generated content, such as charts, graphs, or other visual aids that help interpret the information more easily.",
             key="visualization",
+            disabled=True,
         )
         st.divider()
 
@@ -218,7 +224,6 @@ def run():
                 key="retriever_k_1",
             )
             st.divider()
-            st.divider()
 
             st.subheader("✉️ Conversation")
             question_1 = st.text_area("Question", disabled=True, key="question_1")
@@ -293,7 +298,6 @@ def run():
                 help="Determines the number of relevant documents to retrieve.",
                 key="retriever_k_2",
             )
-            st.divider()
             st.divider()
 
             st.subheader("💬 Conversation")

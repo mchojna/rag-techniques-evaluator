@@ -33,8 +33,7 @@ prompts:
     exclusion-prompt:
     - "Write a short paragraph about {topic}. Important: Do not mention or reference anything related to {exclude}."
 
-# TODO
-#    self-consistency-prompt:
+#  TODO self-consistency-prompt:
 #        - multiple-reasoning-prompt:
 #            - "Solve the following problem using a unique approach. This is reasoning path {path_number}. Problem: {problem} Reasoning path {path_number}:"
 #        - aggregating-prompt:
@@ -42,7 +41,7 @@ prompts:
 #        - self-consistency-check:
 #            - "Evaluate the consistency and reliability of the following result for the given problem. Problem: { problem } Result: { result } Evaluation (consider factors like logical consistency, adherence to known facts, and potential biases):"
 #
-#    task-decomposition-prompt:
+#  TODO task-decomposition-prompt:
 #        - decomposition-prompt:
 #            - "Break down the task of analyzing a company's financial health into 3 subtasks. For each subtask, provide a brief description of what it should accomplish. Task: {task} Subtasks: 1."
 #        - chaining-subtasks-prompt:
@@ -52,8 +51,8 @@ prompts:
 #        - result-integration-prompt:
 #            - "Based on the following analyses, provide an overall assessment of the company's financial health: Profitability Analysis: {profitability} Liquidity Analysis: {liquidity} Cash Flow Analysis: {cash_flow} Summarize the key points and give an overall evaluation of the company's financial position."
 #
-#    a-b-testing-prompt: []
+#   TODO a-b-testing-prompt: []
 #
-#    iterative-prompt: []
+#   TODO iterative-prompt: []
 #
-#    ambiguity-clarity-prompt: []
+#   TODO ambiguity-clarity-prompt: []

@@ -43,8 +43,7 @@ async def prepare_evaluation(user_input: str, response: str, retrieved_contexts:
         "noise_sensitivity": (NoiseSensitivity, {"llm": evaluator_llm}),
         "response_relevancy": (ResponseRelevancy, {"llm": evaluator_llm, "embeddings": evaluator_embeddings}),
         "faithfulness": (Faithfulness, {"llm": evaluator_llm}),
-        # TODO
-        # "discriminator":
+        # TODO "discriminator":
     }
 
     for name, (cls, kwargs) in metric_classes.items():

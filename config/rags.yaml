@@ -5,26 +5,25 @@ rags:
   - fusion-rag
   - graph-rag
   - semantic-chunking-rag
-# TODO
-#  - hyde-hypothetical-document-embedding-rag
-#  - hype-hypothetical-prompt-embeddings-rag
-#  - microsoft-graph-rag
-#  - choose-chunk-size-rag
-#  - contextual-chunk-headers-rag
-#  - contextual-compression-rag
-#  - crag
-#  - dartboard-rag
-#  - document-augmentation-rag
-#  - explainable-rag
-#  - hierarchical-indices-rag
-#  - multi-model-with-captioning-rag
-#  - multi-model-with-colpal-rag
-#  - proposition-chunking-rag
-#  - query-transformations-rag
-#  - raptor-rag
-#  - relevant-segment-extraction-rag
-#  - reliable-rag
-#  - reranking-rag
-#  - with-feedback-loop-rag
-#  - self-rag
-#  - simple-csv-rag
+#  - TODO hyde-hypothetical-document-embedding-rag
+#  - TODO hype-hypothetical-prompt-embeddings-rag
+#  - TODO microsoft-graph-rag
+#  - TODO choose-chunk-size-rag
+#  - TODO contextual-chunk-headers-rag
+#  - TODO contextual-compression-rag
+#  - TODO crag
+#  - TODO dartboard-rag
+#  - TODO document-augmentation-rag
+#  - TODO explainable-rag
+#  - TODO hierarchical-indices-rag
+#  - TODO multi-model-with-captioning-rag
+#  - TODO multi-model-with-colpal-rag
+#  - TODO proposition-chunking-rag
+#  - TODO query-transformations-rag
+#  - TODO raptor-rag
+#  - TODO relevant-segment-extraction-rag
+#  - TODO reliable-rag
+#  - TODO reranking-rag
+#  - TODO with-feedback-loop-rag
+#  - TODO self-rag
+#  - TODO simple-csv-rag

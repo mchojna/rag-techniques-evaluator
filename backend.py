@@ -7,6 +7,7 @@ from langchain_core.documents import Document
 from utilities.evaluation import prepare_evaluation
 from utilities.prompt import create_prompt
 from utilities.rag import create_rag
+from utilities.tools import create_files
 
 load_dotenv(".env")
 
@@ -16,9 +17,9 @@ EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-ada-002")
 async def evaluate_model(user_question: str, ground_truth: str, evaluation_metrics: Dict, visualization: bool, model: Dict, knowledge_source: List[str]) -> Dict:
     prompt = create_prompt(user_question, model["prompt_technique"])
     print("Created prompt")
-    # paths = create_files(knowledge_source)
-    # print("Created paths")
-    paths = knowledge_source
+    paths = create_files(knowledge_source)
+    print("Created paths")
+    # paths = knowledge_source
     rag = create_rag(
         rag_technique=model["rag_technique"],
         base_model=model["model_choice"],
@@ -60,10 +61,9 @@ async def evaluate_model(user_question: str, ground_truth: str, evaluation_metri
     )
     print("Created metrics")
 
-    # TODO
-    # if visualization:
+    # TODO if visualization:
     #     pass
-    # print("Created visualization")
+    #     print("Created visualization")
 
     return {
         "question": question,
@@ -104,6 +104,5 @@ async def evaluate_model(user_question: str, ground_truth: str, evaluation_metri
 #     return test
 #
 # if __name__ == "__main__":
-    # res = asyncio.run(main())
-    # print(res)
-
+#     res = asyncio.run(main())
+#     print(res)
