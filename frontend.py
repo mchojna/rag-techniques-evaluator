@@ -2,6 +2,8 @@ import asyncio
 import os
 from dotenv import load_dotenv
 import streamlit as st
+import altair as alt
+import pandas as pd
 from backend import evaluate_model
 from utilities.tools import load_yaml_config, get_rag_techniques, get_prompt_techniques
 
@@ -12,10 +14,12 @@ def reset_inputs():
     st.session_state.clear()
     st.rerun()
 
+
 def load_config(config):
     for key, default in config.items():
         if key not in st.session_state:
             st.session_state[key] = default
+
 
 def run():
     st.set_page_config(page_title="RAG Evaluator", layout="wide", page_icon="📊")
@@ -312,66 +316,124 @@ def run():
         reset_inputs()
 
     if start_button:
-        evaluation_model_1 = asyncio.run(evaluate_model(
-            user_question=user_question,
-            ground_truth=ground_truth,
-            evaluation_metrics={
-                "context_precision": context_precision,
-                "context_recall": context_recall,
-                "context_entities_recall": context_entities_recall,
-                "noise_sensitivity": noise_sensitivity,
-                "response_relevancy": response_relevancy,
-                "faithfulness": faithfulness,
-                "discriminator": discriminator
-            },
-            visualization=visualization,
-            model={
-                "model_choice": llm_model_1,
-                "temperature": temperature_1,
-                "max_tokens": max_tokens_1,
-                "rag_technique": rag_technique_1,
-                "prompt_technique": prompt_technique_1,
-                "chunk_size": chunk_size_1,
-                "chunk_overlap": chunk_overlap_1,
-                "retriever_k": retriever_k_1,
-            },
-            knowledge_source=knowledge_source,
-        ))
-        print(evaluation_model_1)
+        with st.spinner("Evaluating models..."):
+            # Run evaluations
+            evaluation_model_1 = asyncio.run(
+                evaluate_model(
+                    user_question=user_question,
+                    ground_truth=ground_truth,
+                    evaluation_metrics={
+                        "context_precision": context_precision,
+                        "context_recall": context_recall,
+                        "context_entities_recall": context_entities_recall,
+                        "noise_sensitivity": noise_sensitivity,
+                        "response_relevancy": response_relevancy,
+                        "faithfulness": faithfulness,
+                        "discriminator": discriminator,
+                    },
+                    model={
+                        "model_choice": llm_model_1,
+                        "temperature": temperature_1,
+                        "max_tokens": max_tokens_1,
+                        "rag_technique": rag_technique_1,
+                        "prompt_technique": prompt_technique_1,
+                        "chunk_size": chunk_size_1,
+                        "chunk_overlap": chunk_overlap_1,
+                        "retriever_k": retriever_k_1,
+                    },
+                    knowledge_source=knowledge_source,
+                )
+            )
 
-        evaluation_model_2 = asyncio.run(evaluate_model(
-            user_question=user_question,
-            ground_truth=ground_truth,
-            evaluation_metrics={
-                "context_precision": context_precision,
-                "context_recall": context_recall,
-                "context_entities_recall": context_entities_recall,
-                "noise_sensitivity": noise_sensitivity,
-                "response_relevancy": response_relevancy,
-                "faithfulness": faithfulness,
-                "discriminator": discriminator
-            },
-            visualization=visualization,
-            model={
-                "model_choice": llm_model_2,
-                "temperature": temperature_2,
-                "max_tokens": max_tokens_2,
-                "rag_technique": rag_technique_2,
-                "prompt_technique": prompt_technique_2,
-                "chunk_size": chunk_size_2,
-                "chunk_overlap": chunk_overlap_2,
-                "retriever_k": retriever_k_2,
-            },
-            knowledge_source=knowledge_source,
-        ))
-        print(evaluation_model_2)
+            evaluation_model_2 = asyncio.run(
+                evaluate_model(
+                    user_question=user_question,
+                    ground_truth=ground_truth,
+                    evaluation_metrics={
+                        "context_precision": context_precision,
+                        "context_recall": context_recall,
+                        "context_entities_recall": context_entities_recall,
+                        "noise_sensitivity": noise_sensitivity,
+                        "response_relevancy": response_relevancy,
+                        "faithfulness": faithfulness,
+                        "discriminator": discriminator,
+                    },
+                    model={
+                        "model_choice": llm_model_2,
+                        "temperature": temperature_2,
+                        "max_tokens": max_tokens_2,
+                        "rag_technique": rag_technique_2,
+                        "prompt_technique": prompt_technique_2,
+                        "chunk_size": chunk_size_2,
+                        "chunk_overlap": chunk_overlap_2,
+                        "retriever_k": retriever_k_2,
+                    },
+                    knowledge_source=knowledge_source,
+                )
+            )
 
-        # evaluation_model_1["question"]
-        # evaluation_model_1["context"]
-        # evaluation_model_1["answer"]
-        # evaluation_model_2["question"]
-        # evaluation_model_2["question"]
-        # evaluation_model_2["question"]
+            # Update text areas for Model 1
+            st.session_state.question_1 = evaluation_model_1["question"]
+            st.session_state.context_1 = (
+                "\n".join(evaluation_model_1["context"])
+                if isinstance(evaluation_model_1["context"], list)
+                else evaluation_model_1["context"]
+            )
+            st.session_state.answer_1 = evaluation_model_1["answer"]
+
+            # Update text areas for Model 2
+            st.session_state.question_2 = evaluation_model_2["question"]
+            st.session_state.context_2 = (
+                "\n".join(evaluation_model_2["context"])
+                if isinstance(evaluation_model_2["context"], list)
+                else evaluation_model_2["context"]
+            )
+            st.session_state.answer_2 = evaluation_model_2["answer"]
+
+            # Display evaluation results
+            with col_model_1:
+                st.subheader("🔬 Results")
+                metrics_df_1 = pd.DataFrame(
+                    evaluation_model_1["metrics"].items(), columns=["Metric", "Score"]
+                )
+                st.table(metrics_df_1)
+
+                if visualization:
+                    st.bar_chart(metrics_df_1.set_index("Metric"))
+
+            with col_model_2:
+                st.subheader("📈 Results")
+                metrics_df_2 = pd.DataFrame(
+                    evaluation_model_2["metrics"].items(), columns=["Metric", "Score"]
+                )
+                st.table(metrics_df_2)
+
+                if visualization:
+                    st.bar_chart(metrics_df_2.set_index("Metric"))
+
+            # Compare models
+            st.subheader("📊 Models Comparison")
+            comparison_df = pd.DataFrame(
+                {
+                    "Metric": metrics_df_1["Metric"],
+                    f"{llm_model_1}": metrics_df_1["Score"],
+                    f"{llm_model_2}": metrics_df_2["Score"],
+                }
+            )
+            st.table(comparison_df)
+
+            if visualization:
+                comparison_df_melted = comparison_df.melt(
+                    id_vars=["Metric"], var_name="Model", value_name="Score"
+                )
+                chart = (
+                    alt.Chart(comparison_df_melted)
+                    .mark_bar()
+                    .encode(x="Metric", y="Score", color="Model", column="Model")
+                    .properties(width=300)
+                )
+                st.altair_chart(chart)
+
 
 if __name__ == "__main__":
     run()

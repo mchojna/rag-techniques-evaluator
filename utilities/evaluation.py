@@ -1,5 +1,5 @@
 import os
-from typing import List, Dict
+from typing import List, Dict, Union
 
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
@@ -16,7 +16,7 @@ BASE_MODEL = os.getenv("BASE_MODEL", "text-embedding-ada-002")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-ada-002")
 
 
-async def prepare_evaluation(user_input: str, response: str, retrieved_contexts: List[str]|str, reference: str, evaluation_metrics: Dict) -> Dict:
+async def prepare_evaluation(user_input: str, response: str, retrieved_contexts: Union[List[str], str], reference: str, evaluation_metrics: Dict) -> Dict[str, float]:
     if isinstance(retrieved_contexts, str):
         retrieved_contexts = [retrieved_contexts]
 

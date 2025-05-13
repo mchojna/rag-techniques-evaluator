@@ -14,7 +14,7 @@ load_dotenv(".env")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-ada-002")
 
-async def evaluate_model(user_question: str, ground_truth: str, evaluation_metrics: Dict, visualization: bool, model: Dict, knowledge_source: List[str]) -> Dict:
+async def evaluate_model(user_question: str, ground_truth: str, evaluation_metrics: Dict, model: Dict, knowledge_source: List[str]) -> Dict:
     prompt = create_prompt(user_question, model["prompt_technique"])
     print("Created prompt")
     paths = create_files(knowledge_source)
@@ -60,10 +60,6 @@ async def evaluate_model(user_question: str, ground_truth: str, evaluation_metri
         evaluation_metrics=evaluation_metrics
     )
     print("Created metrics")
-
-    # TODO if visualization:
-    #     pass
-    #     print("Created visualization")
 
     return {
         "question": question,
